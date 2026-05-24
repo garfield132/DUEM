@@ -274,22 +274,71 @@ useEffect(() => {
     try { const r = await fetch(`${API_URL}/api/bookings`); setBookings(await r.json()) } catch {}
   }
   const handleSubmit = async () => {
-    if (!form.customer_name||!form.phone||!form.booking_date||!form.booking_time||!selected) { alert('กรุณากรอกข้อมูลให้ครบ'); return }
-    setLoading(true)
-    try {
-      const r = await fetch(`${API_URL}/api/bookings`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...form, table_id:selected})
-      })
-      const d = await r.json()
-      if (d.success) {
-        alert(`จองสำเร็จ — โต๊ะ ${selected}`)
-        fetchBookings(); setSelected(null)
-        setForm({ customer_name:'', phone:'', booking_date:'', booking_time:'' }); setStep('map')
-      } else alert(d.message||'เกิดข้อผิดพลาด')
-    } catch { alert('Server Error') }
-    setLoading(false)
+
+  if (
+    !form.customer_name ||
+    !form.phone ||
+    !form.booking_date ||
+    !form.booking_time ||
+    !selected
+  ) {
+    alert('กรุณากรอกข้อมูลให้ครบ')
+    return
   }
+
+  setLoading(true)
+
+  try {
+
+    const table = TABLES.find(t => t.id === selected)
+
+    const r = await fetch(`${API_URL}/api/bookings`, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify({
+        ...form,
+        table_id: Number(table.id.replace(/[A-Z]/g, ''))
+      })
+    })
+
+    const d = await r.json()
+
+    if (d.success) {
+
+      alert(`จองสำเร็จ — โต๊ะ ${selected}`)
+
+      fetchBookings()
+
+      setSelected(null)
+
+      setForm({
+        customer_name:'',
+        phone:'',
+        booking_date:'',
+        booking_time:''
+      })
+
+      setStep('map')
+
+    } else {
+
+      alert(d.message || 'เกิดข้อผิดพลาด')
+
+    }
+
+  } catch (err) {
+
+    console.log(err)
+
+    alert('Server Error')
+
+  }
+
+  setLoading(false)
+
+}
   const updateStatus = async (id, status) => {
     try { await fetch(`${API_URL}/api/bookings/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status}) }); fetchBookings() } catch {}
   }
